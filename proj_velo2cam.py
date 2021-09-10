@@ -25,8 +25,10 @@ points = scan[:, 0:3] # lidar xyz (front, left, up)
 # TODO: use fov filter? 
 velo = np.insert(points,3,1,axis=1).T
 velo = np.delete(velo,np.where(velo[0,:]<0),axis=1)
+tt=P2*R0_rect
 cam = P2 * R0_rect * Tr_velo_to_cam * velo
 cam = np.delete(cam,np.where(cam[2,:]<0)[1],axis=1)
+
 # get u,v,z
 cam[:2] /= cam[2,:]
 # do projection staff
@@ -35,7 +37,9 @@ png = mpimg.imread(img)
 IMG_H,IMG_W,_ = png.shape
 # restrict canvas in range
 plt.axis([0,IMG_W,IMG_H,0])
-plt.imshow(png)
+#plt.imshow(png)
+color=np.zeros((IMG_H,IMG_W,3), np.float)
+
 # filter point out of canvas
 u,v,z = cam
 u_out = np.logical_or(u<0, u>IMG_W)
@@ -44,7 +48,13 @@ outlier = np.logical_or(u_out, v_out)
 cam = np.delete(cam,np.where(outlier),axis=1)
 # generate color map from depth
 u,v,z = cam
-plt.scatter([u],[v],c=[z],cmap='rainbow_r',alpha=0.5,s=2)
+u_new=np.array(u,dtype=int).reshape(-1,)
+v_new=np.array(v,dtype=int).reshape(-1,)
+coor = (v_new, u_new)
+color[v_new, u_new]=png[v_new, u_new]
+#plt.scatter([u],[v],c=[z],cmap='rainbow_r',alpha=0.5,s=2)
+plt.imshow(color)
 plt.title(name)
 plt.savefig(f'./data_object_image_2/testing/projection/{name}.png',bbox_inches='tight')
 plt.show()
+
